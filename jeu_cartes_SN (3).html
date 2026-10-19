@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Les cartes à révéler — S ou N ?</title>
+<style>
+:root{--ink:#302d2a;--muted:#706a64;--cream:#fbf6ef;--paper:#fffdf9;--terracotta:#b86e4b;--terracotta-dark:#8f4e33;--blue:#668aa0;--blue-dark:#3f687f;--line:#e9ded2;--green:#607b68}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(circle at top left,#f1dfcf 0,transparent 35%),var(--cream);color:var(--ink);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+main{max-width:880px;margin:0 auto;padding:28px 18px 54px}
+header{text-align:center;padding:14px 0 24px}
+.kicker{text-transform:uppercase;letter-spacing:.16em;font-size:.72rem;font-weight:800;color:var(--terracotta-dark)}
+h1{font-family:Georgia,serif;font-weight:500;font-size:clamp(2rem,6vw,3.4rem);line-height:1.05;margin:12px 0}
+.subtitle{max-width:620px;margin:0 auto;color:var(--muted);line-height:1.6}
+.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:.82rem;color:var(--muted);background:#fff9}
+.stats{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:10px 16px;min-width:110px;text-align:center}
+.stat strong{display:block;font-size:1.3rem}.stat span{font-size:.76rem;color:var(--muted)}
+.progress{height:7px;background:#eadfd4;border-radius:99px;overflow:hidden;margin:0 0 22px}
+.progress div{height:100%;width:0;background:linear-gradient(90deg,var(--terracotta),var(--blue));transition:width .25s}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:24px;padding:clamp(20px,5vw,38px);box-shadow:0 15px 45px #53351a0c}
+.card-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:22px}
+.number{font-size:.8rem;font-weight:800;letter-spacing:.08em;color:var(--terracotta-dark)}
+.small-note{font-size:.8rem;color:var(--muted)}
+.question{font-family:Georgia,serif;font-size:clamp(1.45rem,4vw,2.1rem);line-height:1.22;margin:0 0 24px}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.answer{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:18px;text-align:left;cursor:pointer;min-height:125px;transition:.15s;color:var(--ink);font:inherit}
+.answer:hover{border-color:#cba58d;transform:translateY(-1px)}
+.answer.selected{border-color:var(--terracotta);box-shadow:0 0 0 3px #b86e4b20;background:#fff8f3}
+.answer .letter{display:block;font-size:.76rem;font-weight:900;letter-spacing:.1em;color:var(--terracotta-dark);margin-bottom:9px}
+.answer .copy{line-height:1.45}
+.actions{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:22px}
+button{font:inherit;font-weight:750;border:0;border-radius:12px;padding:12px 18px;cursor:pointer}
+.primary{background:var(--ink);color:white}.primary:disabled{opacity:.35;cursor:not-allowed}
+.secondary{background:transparent;border:1px solid var(--line);color:var(--muted)}
+.reveal{display:none;margin-top:20px;border-radius:16px;padding:17px 19px;background:#f5ede4;border:1px solid var(--line);line-height:1.5}
+.reveal.show{display:block;animation:fade .25s ease}
+.reveal strong{font-size:1.05rem}
+.reveal .tag{display:inline-block;margin-right:8px;border-radius:8px;padding:4px 9px;color:white;font-weight:900}
+.tag.s{background:var(--terracotta)}.tag.n{background:var(--blue-dark)}
+.bottom{margin-top:18px;text-align:center;font-size:.82rem;color:var(--muted);line-height:1.55}
+.result{display:none}.result.show{display:block}
+.result h2{font-family:Georgia,serif;font-weight:500;font-size:2.3rem;margin:8px 0}
+.result-bars{margin:24px 0;display:grid;gap:18px}
+.bar-label{display:flex;justify-content:space-between;gap:12px;font-weight:750;margin-bottom:7px}
+.track{height:14px;border-radius:99px;background:#eee4db;overflow:hidden}.fill{height:100%;width:0;transition:width .6s}
+.fill.s{background:var(--terracotta)}.fill.n{background:var(--blue)}
+.result-message{background:#f5ede4;padding:18px;border-radius:16px;line-height:1.6}
+.footer-note{font-size:.82rem;color:var(--muted);line-height:1.6;margin-top:24px}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@media(max-width:600px){.answers{grid-template-columns:1fr}.answer{min-height:auto}.card{border-radius:18px}.card-top{align-items:flex-start}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<div class="kicker">Une exploration de tes préférences</div>
+<h1>Tu regardes le monde<br>plutôt S ou plutôt N&nbsp;?</h1>
+<p class="subtitle">8 situations tirées au hasard parmi 18, deux façons de répondre. Choisis ce qui te ressemble le plus, puis révèle la catégorie associée à ton choix.</p>
+</header>
+<div id="game">
+<div class="stats">
+<div class="stat"><strong id="progressText">0 / 8</strong><span>cartes révélées</span></div>
+<div class="stat"><strong id="scoreS">0</strong><span>S · Sensation</span></div>
+<div class="stat"><strong id="scoreN">0</strong><span>N · Intuition</span></div>
+</div>
+<div class="progress"><div id="progressBar"></div></div>
+<section class="card" aria-live="polite">
+<div class="card-top"><span class="number" id="cardNumber">CARTE 01</span><span class="small-note">Choisis une réponse, puis révèle</span></div>
+<h2 class="question" id="question"></h2>
+<div class="answers">
+<button class="answer" id="answerA" type="button"><span class="letter">RÉPONSE A</span><span class="copy"></span></button>
+<button class="answer" id="answerB" type="button"><span class="letter">RÉPONSE B</span><span class="copy"></span></button>
+</div>
+<div class="reveal" id="revealBox"></div>
+<div class="actions">
+<button class="secondary" id="restartSmall" type="button">Recommencer</button>
+<button class="primary" id="revealBtn" type="button" disabled>Révéler ma carte</button>
+<button class="primary" id="nextBtn" type="button" style="display:none">Carte suivante →</button>
+</div>
+</section>
+<p class="bottom">Il n'y a pas de bonne ou de mauvaise réponse. Choisis spontanément, sans chercher la réponse « idéale ».</p>
+</div>
+<section class="card result" id="result">
+<div class="kicker">Tes 8 cartes sont révélées</div>
+<h2 id="resultTitle">Voici ce qui ressort…</h2>
+<p id="resultIntro"></p>
+<div class="result-bars">
+<div><div class="bar-label"><span>S · Sensation</span><span id="finalS">0 / 18</span></div><div class="track"><div class="fill s" id="barS"></div></div></div>
+<div><div class="bar-label"><span>N · Intuition</span><span id="finalN">0 / 18</span></div><div class="track"><div class="fill n" id="barN"></div></div></div>
+</div>
+<div class="result-message" id="resultMessage"></div>
+<div class="actions"><button class="primary" id="playAgain" type="button">Rejouer avec 8 nouvelles cartes</button></div>
+<p class="footer-note"><strong>À retenir :</strong> cette activité est un support de découverte et de discussion, pas un test officiel MBTI. Un score indique seulement les réponses choisies dans ce jeu ; il ne détermine pas à lui seul le type MBTI d'une personne.</p>
+</section>
+<p class="footer-note">Animation pédagogique — préférences S/N.</p>
+</main>
+<script>
+const questions = [
+{q:"Comment faites-vous pour monter un meuble en kit ?", answers:[
+{text:"Je laisse tomber les instructions ; je regarde l'image sur l'emballage et j'ai ainsi une idée de la manière dont les pièces s'assemblent entre elles.",category:"N",note:"Tu t’appuies sur une représentation globale pour comprendre comment les éléments peuvent s’assembler. Tu explores les liens et le fonctionnement d’ensemble plutôt que de suivre une procédure détaillée."},
+{text:"Je suis scrupuleusement les instructions : elles sont là pour une bonne raison !",category:"S",note:"Tu privilégies un mode d’emploi précis et une progression étape par étape. Les indications concrètes te servent de repères pour réaliser la tâche."}]},
+{q:"Que feriez-vous s'il vous restait, à la fin, des pièces inutilisées ?", answers:[
+{text:"J'espérerais qu'il s'agisse de pièces de rechange !",category:"N",note:"Tu envisages spontanément une explication possible à partir de la situation. Tu acceptes de laisser une part d’incertitude et d’interprétation."},
+{text:"Ce serait peu probable. Je vérifie toujours les pièces avant de commencer !",category:"S",note:"Tu accordes de l’importance à la vérification préalable et aux éléments concrets. Anticiper les détails t’aide à sécuriser la réalisation."}]},
+{q:"Que feriez-vous si vous perdiez la notice ?", answers:[
+{text:"J'essaierais de trouver un moyen pour la remplacer : peut-être en la trouvant sur Internet ou en téléphonant au fournisseur pour qu'il m'envoie un autre exemplaire.",category:"S",note:"Tu cherches une ressource concrète et fiable pour poursuivre la tâche. Tu préfères retrouver des indications précises plutôt que devoir improviser la méthode."},
+{text:"Je tenterais quand même de le monter et si ce n'était pas évident, j'essaierais différentes façons jusqu'à trouver celle qui fonctionne le mieux.",category:"N",note:"Tu es prêt·e à expérimenter plusieurs possibilités et à trouver ta propre voie. Tu explores des options jusqu’à repérer une solution qui fonctionne."}]},
+{q:"Combien de livres avez-vous lu cette année ?", answers:[
+{text:"Cinq, ou même moins car je les ai lus du début jusqu'à la fin. Je n'ai pas compté celui que je suis en train de lire.",category:"S",note:"Tu t’appuies sur un décompte précis et sur une définition concrète de ce qui compte comme un livre lu. Tu privilégies une information factuelle et vérifiable."},
+{text:"15 ou même davantage car j'ai compté tous ceux que j'ai commencés en ce moment et les quelques-uns que j'ai parcourus en diagonale !",category:"N",note:"Tu prends en compte une vision plus large de tes lectures, y compris celles commencées ou parcourues partiellement. Tu considères plusieurs façons d’interpréter la question."}]},
+{q:"Quel genre de livres appréciez-vous ?", answers:[
+{text:"Des romans inspirés de faits réels, des documentaires, des histoires vraies, des textes de description détaillée bien écrits.",category:"S",note:"Tu apprécies les récits ancrés dans le réel et les descriptions précises. Les faits, les détails et les expériences concrètes nourrissent ton intérêt."},
+{text:"Des scénarios intrigants qui ne sont résolus qu'à la fin. L'ambiguïté stimule mon imagination.",category:"N",note:"Tu apprécies les possibilités d’interprétation, les énigmes et ce qui reste à découvrir. L’imagination et les liens à construire font partie du plaisir."}]},
+{q:"Comment lisez-vous un journal/magazine ?", answers:[
+{text:"Je le feuillette en lisant les articles qui suscitent mon intérêt.",category:"N",note:"Tu navigues de manière sélective selon ce qui attire ton attention. Tu suis volontiers les pistes et les sujets qui éveillent ta curiosité."},
+{text:"Je commence par le début en avançant progressivement vers la fin. Y a-t-il un autre moyen ?",category:"S",note:"Tu privilégies un parcours ordonné et progressif. Suivre la succession des éléments te donne un cadre clair pour parcourir le contenu."}]},
+{q:"Sur quoi portez-vous votre attention lorsque vous réalisez quelque chose de nouveau ?", answers:[
+{text:"Je m'appuie sur la réalité de la situation et les expériences passées pour comprendre ce qui va fonctionner.",category:"S",note:"Tu pars des faits disponibles et de l’expérience pour évaluer ce qui peut fonctionner. Les éléments déjà observés te servent de points d’appui."},
+{text:"Je me concentre sur ce qui serait possible et j'imagine des façons de faire nouvelles et innovantes pour aborder la situation.",category:"N",note:"Tu explores les possibilités et imagines des approches inédites. Tu es attiré·e par ce qui pourrait être créé ou envisagé au-delà de l’existant."}]},
+{q:"Comment réagiriez-vous si l'on vous demandait de mettre en place un processus qui a déjà fait ses preuves ?", answers:[
+{text:"Le fait qu'il ne s'agisse pas de quelque chose de nouveau m'enlève ma motivation, car c'est sans intérêt de mettre en œuvre quelque chose d'ancien.",category:"N",note:"Tu es davantage stimulé·e par la nouveauté et la recherche de nouvelles pistes. Une méthode déjà connue peut te sembler moins intéressante si elle n’ouvre pas de perspectives."},
+{text:"Son succès antérieur m'apporterait l'assurance que ce processus marche dans les faits et cela me motiverait.",category:"S",note:"Tu accordes de la valeur à l’expérience et aux résultats déjà observés. Le fait qu’une méthode ait fait ses preuves constitue un repère rassurant et concret."}]},
+{q:"Comment résoudriez-vous un problème sans précédents ?", answers:[
+{text:"Ce serait passionnant car il faudrait trouver une nouvelle solution. Ce serait stimulant d'envisager toutes les solutions possibles.",category:"N",note:"Tu vois l’absence de précédent comme une occasion d’explorer plusieurs hypothèses. Imaginer des solutions possibles est une source de stimulation."},
+{text:"J'aurais des inquiétudes quant à la pertinence de la solution et je lancerais un projet-pilote avant de finaliser la solution.",category:"S",note:"Tu souhaites vérifier la solution dans la pratique avant de la généraliser. Un essai concret permet de recueillir des éléments et de limiter l’incertitude."}]},
+{q:"Comment établissez-vous une stratégie business ?", answers:[
+{text:"Je rassemble des faits sur notre position actuelle puis je les extrapole de manière réaliste jusqu'à atteindre une vision sur le long terme.",category:"S",note:"Tu construis la stratégie à partir de données sur la situation actuelle, puis tu avances par extrapolation. Les faits servent de base à la projection."},
+{text:"J'envisage un objectif ambitieux, je pars de là pour regarder ensuite comment le rendre réaliste et réalisable.",category:"N",note:"Tu pars d’une vision ou d’un objectif futur, puis tu explores comment le rendre possible. La perspective globale guide ensuite la recherche de moyens."}]},
+{q:"À quoi sert une prévision financière ?", answers:[
+{text:"La prévision aurait un rôle essentiel pour planifier le montant de l'investissement de façon précise et le retour sur investissement attendu d'une année à l'autre.",category:"S",note:"Tu vois la prévision comme un outil de planification chiffrée et précise. Tu cherches à disposer de repères mesurables pour anticiper les résultats."},
+{text:"La prévision permettrait de surveiller l'avancement mais devrait évidemment être réajustée au fil du temps.",category:"N",note:"Tu considères la prévision comme une hypothèse utile pour suivre une trajectoire, tout en restant ouvert·e aux ajustements. La projection évolue avec la situation."}]},
+{q:"De quelle manière préféreriez-vous communiquer là-dessus ?", answers:[
+{text:"J'aurais probablement recours à des métaphores pour que la nouvelle perspective inspire les autres. Je me concentrerais davantage sur où veut-on arriver plutôt que sur le comment.",category:"N",note:"Tu cherches à transmettre une vision et à susciter l’inspiration à l’aide d’images ou de métaphores. Tu mets l’accent sur la destination et le sens global."},
+{text:"Avec des faits et des chiffres à l'appui et une feuille de route claire détaillant chaque étape de la réalisation.",category:"S",note:"Tu privilégies les informations vérifiables et un déroulé concret. Les chiffres et les étapes rendent le projet plus tangible et plus facile à suivre."}]},
+{q:"Comment réagissez-vous face à une nouvelle idée créative ?", answers:[
+{text:"Je veux évaluer son degré d’innovation. Le concept a-t-il du sens ?",category:"N",note:"Tu t’intéresses à la nouveauté et à la cohérence du concept. Tu cherches à comprendre ce que l’idée apporte ou ouvre comme possibilités."},
+{text:"Je veux savoir si elle fonctionnera en pratique. Va-t-elle améliorer ce qui existe déjà ?",category:"S",note:"Tu examines l’utilité concrète et la faisabilité de l’idée. Tu cherches à voir comment elle se traduira dans la réalité et ce qu’elle améliorera."}]},
+{q:"Que pensez-vous de l’amélioration continue ?", answers:[
+{text:"Je préfère faire table rase et repartir à zéro. Un changement de paradigme est quelque chose d’excitant.",category:"N",note:"Tu es attiré·e par la possibilité de repenser profondément une situation et d’explorer un nouveau modèle. La transformation globale peut te stimuler."},
+{text:"J’aime le fait de ne réparer que ce qui est cassé plutôt que de jeter le bébé avec l’eau du bain.",category:"S",note:"Tu privilégies les améliorations ciblées qui préservent ce qui fonctionne déjà. Tu pars de l’existant et ajustes les éléments qui en ont besoin."}]},
+{q:"Appréciez-vous de voir une idée se concrétiser ?", answers:[
+{text:"Je perds souvent mon intérêt et je laisse le soin de la réalisation à d’autres. C’est l’idée en elle-même qui a de la valeur.",category:"N",note:"Tu peux être particulièrement stimulé·e par l’émergence d’une idée et par les possibilités qu’elle ouvre. La phase d’exploration peut être plus attirante que sa mise en œuvre."},
+{text:"Oui c’est ce qui compte.",category:"S",note:"Tu accordes une importance forte à la concrétisation et au résultat visible. Voir l’idée prendre forme dans la réalité est un repère essentiel."}]},
+{q:"De quelles informations avez-vous besoin pour vous rendre dans un endroit inconnu ?", answers:[
+{text:"Je serais rassuré(e) de connaitre la direction à prendre et de me fier aux panneaux de signalisation ou d’avoir un numéro de téléphone à appeler si jamais je me perds.",category:"N",note:"Tu souhaites disposer de repères généraux et garder une marge d’adaptation pendant le trajet. Tu peux t’orienter à partir de la direction et des indications rencontrées en chemin."},
+{text:"J’imprimerais un itinéraire ou je le chercherais sur une carte et je noterais les numéros des routes à prendre et peut être aussi les distances.",category:"S",note:"Tu préfères des indications précises et concrètes : routes, distances et étapes. Ces détails te permettent de préparer le déplacement et de savoir où tu en es."}]},
+{q:"Que feriez-vous si vous disposiez de l’itinéraire imprimé pour vous rendre dans un endroit inconnu ?", answers:[
+{text:"J’y jetterais un rapide coup d’œil mais je trouverais cela plutôt frustrant de devoir le suivre à la lettre.",category:"N",note:"Tu préfères garder de la souplesse et t’adapter au contexte plutôt que suivre chaque indication à la lettre. Tu peux retenir la direction générale et improviser en chemin."},
+{text:"C’est facilitant de suivre chaque élément du parcours grâce au nom de la route et aux distances afin de savoir exactement où je me trouve.",category:"S",note:"Tu apprécies les informations détaillées qui permettent de suivre précisément ta progression. Les noms de routes et les distances offrent des repères concrets."}]},
+{q:"S’il s’agissait de vous rendre à un entretien d’embauche important, quelles précautions pourriez-vous prendre ?", answers:[
+{text:"Je partirais un peu plus tôt ou je ferais un calcul approximatif du temps de trajet.",category:"N",note:"Tu privilégies une marge de sécurité et une estimation globale du trajet, sans nécessairement détailler chaque étape. Tu gardes une certaine flexibilité dans la préparation."},
+{text:"J’irais faire un tour de reconnaissance avant, afin de savoir exactement à quoi ressemble l’immeuble et de calculer le temps nécessaire pour y aller.",category:"S",note:"Tu souhaites vérifier les conditions concrètes à l’avance : le lieu exact et le temps nécessaire. Une reconnaissance permet de réduire les imprévus grâce à des informations précises."}]}
+];
+let deck=[], index=0, selected=null, revealed=false, counts={S:0,N:0};
+const $=id=>document.getElementById(id);
+function shuffledAnswers(item){return {...item, answers:[...item.answers].sort(()=>Math.random()-.5)};}
+function newDeck(){
+ // Sélectionner 8 questions différentes parmi les 18, puis mélanger les réponses de chacune.
+ const pool=[...questions];
+ for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+ deck=pool.slice(0,8).map(shuffledAnswers);
+}
+function render(){
+ const item=deck[index]; selected=null; revealed=false;
+ $("cardNumber").textContent=`CARTE ${String(index+1).padStart(2,"0")}`;
+ $("question").textContent=item.q;
+ ["A","B"].forEach((k,i)=>{const btn=$("answer"+k);btn.classList.remove("selected");btn.disabled=false;btn.querySelector(".copy").textContent=item.answers[i].text;});
+ $("revealBox").className="reveal";$("revealBox").textContent="";
+ $("revealBtn").style.display="inline-block";$("revealBtn").disabled=true;
+ $("nextBtn").style.display="none";
+ $("progressText").textContent=`${index} / ${deck.length}`;
+ $("progressBar").style.width=`${index/deck.length*100}%`;
+ updateScores();
+}
+function updateScores(){$("scoreS").textContent=counts.S;$("scoreN").textContent=counts.N;}
+function choose(k){if(revealed)return;selected=k;["A","B"].forEach(x=>$("answer"+x).classList.toggle("selected",x===k));$("revealBtn").disabled=false;}
+$("answerA").addEventListener("click",()=>choose("A"));
+$("answerB").addEventListener("click",()=>choose("B"));
+$("revealBtn").addEventListener("click",()=>{
+ if(!selected||revealed)return;
+ const item=deck[index], answer=item.answers[selected==="A"?0:1], category=answer.category;
+ revealed=true;counts[category]++;
+ ["A","B"].forEach(k=>$("answer"+k).disabled=true);
+ $("revealBtn").style.display="none";
+ $("revealBox").innerHTML=`<span class="tag ${category.toLowerCase()}">${category}</span><strong>${category==="S"?"S — Sensation":"N — Intuition"}</strong><br>${answer.note}`;
+ $("revealBox").classList.add("show");$("nextBtn").style.display="inline-block";
+ $("nextBtn").textContent=index===deck.length-1?"Voir mon résultat →":"Carte suivante →";
+ $("progressText").textContent=`${index+1} / ${deck.length}`;
+ $("progressBar").style.width=`${(index+1)/deck.length*100}%`;updateScores();
+});
+$("nextBtn").addEventListener("click",()=>{if(index<deck.length-1){index++;render();}else showResult();});
+function showResult(){
+ $("game").style.display="none";$("result").classList.add("show");
+ $("finalS").textContent=`${counts.S} / ${deck.length}`;$("finalN").textContent=`${counts.N} / ${deck.length}`;
+ $("barS").style.width=`${counts.S/deck.length*100}%`;$("barN").style.width=`${counts.N/deck.length*100}%`;
+ if(counts.S>counts.N){$("resultTitle").textContent="Une tendance S se dessine";$("resultIntro").textContent=`Tu as choisi ${counts.S} réponse(s) associée(s) à S et ${counts.N} associée(s) à N.`;$("resultMessage").textContent="Dans les situations proposées, tu as plus souvent choisi les réponses orientées vers les faits, les détails concrets, l’expérience et les informations observables. Qu’est-ce qui te parle dans ce résultat ? Dans quelles situations ta préférence pourrait-elle être différente ?";}
+ else if(counts.N>counts.S){$("resultTitle").textContent="Une tendance N se dessine";$("resultIntro").textContent=`Tu as choisi ${counts.N} réponse(s) associée(s) à N et ${counts.S} associée(s) à S.`;$("resultMessage").textContent="Dans les situations proposées, tu as plus souvent choisi les réponses orientées vers les possibilités, les liens, les idées et les significations. Qu’est-ce qui te parle dans ce résultat ? Dans quelles situations ta préférence pourrait-elle être différente ?";}
+ else{$("resultTitle").textContent="Un résultat équilibré";$("resultIntro").textContent=`Tu as choisi ${counts.S} réponse(s) S et ${counts.N} réponse(s) N.`;$("resultMessage").textContent="Tes réponses sont partagées à égalité dans cette activité. Cela peut refléter le contexte des questions, tes expériences ou le fait que les deux approches te conviennent. Explore les exemples qui t’ont semblé les plus naturels.";}
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+function restart(){index=0;selected=null;revealed=false;counts={S:0,N:0};newDeck();$("game").style.display="block";$("result").classList.remove("show");render();window.scrollTo({top:0,behavior:"smooth"});}
+$("restartSmall").addEventListener("click",restart);$("playAgain").addEventListener("click",restart);
+newDeck();render();
+</script>
+</body>
+</html>
